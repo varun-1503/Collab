@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animation Studio Dashboard</title>
+<style>
+  * {margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+  body {background:#0d0d0d; color:#fff; overflow-x:hidden; height:100vh;}
+
+  /* Particle Canvas */
+  #particles {position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1;}
+
+  /* Header */
+  header {
+    padding:20px;
+    text-align:center;
+    font-size:2.2rem;
+    font-weight:bold;
+    color:#39ff14;
+    text-shadow:0 0 5px #39ff14,0 0 10px #39ff14,0 0 20px #39ff14;
+    opacity:0;
+    animation: fadeInDown 1s ease forwards;
+    animation-delay:0.2s;
+  }
+
+  /* Buttons */
+  .neon-btn {
+    display:inline-block;
+    padding:10px 20px;
+    margin:10px;
+    color:#39ff14;
+    border:1px solid #39ff14;
+    border-radius:8px;
+    text-decoration:none;
+    text-shadow:0 0 5px #39ff14;
+    box-shadow:0 0 10px #39ff14;
+    cursor:pointer;
+    opacity:0;
+    transition:0.3s;
+  }
+  .neon-btn.active { background:#39ff14; color:#0d0d0d; }
+  .neon-btn:hover { background:#39ff14; color:#0d0d0d; box-shadow:0 0 40px #39ff14; text-shadow:0 0 20px #0d0d0d; transform:scale(1.05); }
+
+  /* Dashboard Grid */
+  .dashboard {display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:30px; padding:40px;}
+
+  /* Cards */
+  .card {
+    position:relative;
+    background:rgba(0,0,0,0.7);
+    border-radius:15px;
+    padding:20px;
+    backdrop-filter:blur(10px);
+    overflow:hidden;
+    opacity:0;
+    transform:translateY(30px);
+    box-shadow:0 0 20px #39ff14;
+    transition:transform 0.3s, box-shadow 0.3s, opacity 0.5s;
+  }
+
+  .card::before, .card::after {
+    content:""; position:absolute; width:100%; height:100%; top:0; left:0; border-radius:15px; pointer-events:none;
+  }
+
+  .card::before {
+    border:2px solid #39ff14;
+    box-shadow:0 0 20px #39ff14,0 0 40px #39ff14;
+    animation: borderPulse 3s infinite alternate;
+  }
+
+  .card::after {
+    background:linear-gradient(120deg, rgba(57,255,20,0.3) 0%, rgba(57,255,20,0) 80%);
+    transform:translateX(-100%) rotate(15deg);
+    animation: floatHighlight 4s infinite linear;
+  }
+
+  .card.show {opacity:1; transform:translateY(0); animation: glowArrival 1.2s ease forwards;}
+  .card:hover {transform:translateY(-10px) scale(1.03); box-shadow:0 0 50px #39ff14;}
+
+  .card h3 {font-size:1.5rem; margin-bottom:10px; color:#39ff14; position:relative; z-index:2;}
+  .card p {font-size:1rem; color:#ccc; position:relative; z-index:2;}
+  .chart-container {width:100%; height:200px; position:relative; z-index:2; margin-top:10px;}
+
+  /* Table inside card */
+  .project-table {width:100%; border-collapse:collapse; margin-top:10px;}
+  .project-table th, .project-table td {border:1px solid rgba(57,255,20,0.5); padding:5px; text-align:left; font-size:0.9rem;}
+  .project-table th {color:#39ff14;}
+  .project-table td {color:#ccc;}
+
+  footer {text-align:center; padding:20px; color:#39ff14; text-shadow:0 0 5px #39ff14,0 0 10px #39ff14; opacity:0; animation: fadeInUp 1s ease forwards; animation-delay:0.5s;}
+
+  @keyframes fadeInUp {from{opacity:0; transform:translateY(30px);}to{opacity:1; transform:translateY(0);}}
+  @keyframes fadeInDown {from{opacity:0; transform:translateY(-20px);}to{opacity:1; transform:translateY(0);}}
+  @keyframes glowArrival {0%{opacity:0; transform:translateY(30px) scale(0.95); box-shadow:0 0 10px #39ff14;}50%{opacity:1; transform:translateY(-5px) scale(1.02); box-shadow:0 0 40px #39ff14;}100%{transform:translateY(0) scale(1); box-shadow:0 0 20px #39ff14;}}
+  @keyframes borderPulse {0%{box-shadow:0 0 20px #39ff14;}100%{box-shadow:0 0 50px #39ff14;}}
+  @keyframes floatHighlight {0%{transform:translateX(-100%) rotate(15deg);}100%{transform:translateX(200%) rotate(15deg);}}
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<header>Animation Studio Dashboard</header>
+
+<div style="text-align:center;">
+  <button class="neon-btn" onclick="filterTasks('all', this)">All</button>
+  <button class="neon-btn" onclick="filterTasks('completed', this)">Completed</button>
+  <button class="neon-btn" onclick="filterTasks('pending', this)">Pending</button>
+</div>
+
+<div class="dashboard" id="dashboard">
+
+  <!-- Active Projects Card -->
+  <div class="card" data-task="active">
+    <h3>Active Projects</h3>
+    <p>12 ongoing animation projects</p>
+    <table class="project-table">
+      <thead>
+        <tr><th>Project</th><th>Team</th><th>Budget</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Project Alpha</td><td>5 Animators</td><td>$12,000</td></tr>
+        <tr><td>Project Beta</td><td>3 Animators</td><td>$8,500</td></tr>
+        <tr><td>Project Gamma</td><td>4 Animators</td><td>$10,200</td></tr>
+      </tbody>
+    </table>
+    <div class="chart-container"><canvas id="chart1"></canvas></div>
+  </div>
+
+  <!-- Completed Tasks Card -->
+  <div class="card" data-task="completed">
+    <h3>Completed Tasks</h3>
+    <p>245 tasks completed this month</p>
+    <table class="project-table">
+      <thead>
+        <tr><th>Task</th><th>Project</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Animation Scene 1</td><td>Alpha</td><td>Done</td></tr>
+        <tr><td>Character Rig</td><td>Beta</td><td>Done</td></tr>
+        <tr><td>Lighting Setup</td><td>Gamma</td><td>Done</td></tr>
+      </tbody>
+    </table>
+    <div class="chart-container"><canvas id="chart2"></canvas></div>
+  </div>
+
+  <!-- Pending Approvals Card -->
+  <div class="card" data-task="pending">
+    <h3>Pending Approvals</h3>
+    <p>7 projects awaiting client approval</p>
+    <table class="project-table">
+      <thead>
+        <tr><th>Project</th><th>Manager</th><th>Budget</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Project Delta</td><td>Varun</td><td>$15,000</td></tr>
+        <tr><td>Project Epsilon</td><td>Ravi</td><td>$9,500</td></tr>
+      </tbody>
+    </table>
+    <div class="chart-container"><canvas id="chart3"></canvas></div>
+  </div>
+
+  <!-- Team Members Card -->
+  <div class="card" data-task="team">
+    <h3>Team Members</h3>
+    <p>14 talented animators</p>
+    <table class="project-table">
+      <thead>
+        <tr><th>Name</th><th>Role</th><th>Current Project</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Varun</td><td>Lead Animator</td><td>Alpha</td></tr>
+        <tr><td>Ravi</td><td>3D Modeler</td><td>Beta</td></tr>
+        <tr><td>Anita</td><td>Texture Artist</td><td>Gamma</td></tr>
+      </tbody>
+    </table>
+    <div class="chart-container"><canvas id="chart4"></canvas></div>
+  </div>
+
+</div>
+
+<footer>© 2025 Animation Studio</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+/* Particle Background */
+const canvas=document.getElementById('particles'); const ctx=canvas.getContext('2d'); let w,h,particlesArray=[];
+function resizeCanvas(){w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight;}
+window.addEventListener('resize',resizeCanvas); resizeCanvas();
+class Particle{constructor(){this.x=Math.random()*w; this.y=Math.random()*h; this.size=Math.random()*2+1; this.speedX=(Math.random()-0.5)*0.5; this.speedY=(Math.random()-0.5)*0.5;}
+update(){this.x+=this.speedX; this.y+=this.speedY; if(this.x<0||this.x>w)this.speedX*=-1; if(this.y<0||this.y>h)this.speedY*=-1;}
+draw(){ctx.fillStyle='#39ff14'; ctx.shadowColor='#39ff14'; ctx.shadowBlur=5; ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill();}}
+function initParticles(){particlesArray=[]; for(let i=0;i<120;i++){particlesArray.push(new Particle());}}
+initParticles();
+function connectParticles(){for(let a=0;a<particlesArray.length;a++){for(let b=a;b<particlesArray.length;b++){let dx=particlesArray[a].x-particlesArray[b].x, dy=particlesArray[a].y-particlesArray[b].y, distance=Math.sqrt(dx*dx+dy*dy); if(distance<100){ctx.strokeStyle='rgba(57,255,20,'+(1-distance/100)+')'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(particlesArray[a].x,particlesArray[a].y); ctx.lineTo(particlesArray[b].x,particlesArray[b].y); ctx.stroke();}}}}
+function animate(){ctx.clearRect(0,0,w,h); particlesArray.forEach(p=>{p.update();p.draw();}); connectParticles(); requestAnimationFrame(animate);}
+animate();
+
+/* Neon Charts */
+const neonColor='#39ff14';
+const chartOptions={plugins:{legend:{labels:{color:neonColor}}}, animation:{duration:2000}, responsive:true, interaction:{mode:'index',intersect:false}};
+new Chart(document.getElementById('chart1'), {type:'doughnut', data:{labels:['Alpha','Beta','Gamma'], datasets:[{data:[5,4,3], backgroundColor:['rgba(57,255,20,0.7)','rgba(0,255,128,0.4)','rgba(0,255,255,0.3)'], borderColor:neonColor, borderWidth:4}]}, options:chartOptions});
+new Chart(document.getElementById('chart2'), {type:'doughnut', data:{labels:['Done','InProgress'], datasets:[{data:[245,15], backgroundColor:['rgba(57,255,20,0.7)','rgba(0,255,128,0.3)'], borderColor:neonColor, borderWidth:4}]}, options:chartOptions});
+new Chart(document.getElementById('chart3'), {type:'bar', data:{labels:['Delta','Epsilon'], datasets:[{data:[2,3], backgroundColor:['rgba(57,255,20,0.5)','rgba(0,255,128,0.3)'], borderColor:neonColor, borderWidth:3, borderSkipped:false}]}, options:chartOptions});
+new Chart(document.getElementById('chart4'), {type:'line', data:{labels:['Mon','Tue','Wed','Thu','Fri'], datasets:[{data:[10,12,9,14,11], borderColor:neonColor, backgroundColor:'rgba(57,255,20,0.2)', borderWidth:3, fill:true, tension:0.4, pointBackgroundColor:neonColor, pointBorderColor:neonColor}]}, options:chartOptions});
+
+/* Filter Tasks */
+function filterTasks(type, btn){
+  document.querySelectorAll('.neon-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const cards=document.querySelectorAll('.card'); let delay=0;
+  cards.forEach(card=>{card.classList.remove('show'); if(type==='all'||card.dataset.task===type){setTimeout(()=>{card.classList.add('show');}, delay); delay+=150;}});
+}
+
+/* Initial staggered card arrival */
+window.addEventListener('load',()=>{
+  const cards=document.querySelectorAll('.card');
+  cards.forEach((card,i)=>{setTimeout(()=>{card.classList.add('show');}, i*200);});
+  const buttons=document.querySelectorAll('.neon-btn');
+  buttons.forEach((btn,i)=>{btn.style.animation=`fadeIn 0.6s forwards`; btn.style.animationDelay=`${0.5+i*0.2}s`;});
+});
+</script>
+
+</body>
+</html>
